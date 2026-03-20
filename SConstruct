@@ -19,7 +19,13 @@ if cc not in available_compilers:
 cflags = []
 cppdefines = []
 src = Split('main.c parse.c')
+headers = Split('parse.h')
 target = 'ddup'
+
+if cc == 'clang':
+    cflags.append('-fcolor-diagnostics')
+if cc == 'gcc':
+    cflags.append('-fdiagnostics-color=always')
 
 if mode == 'debug':
     print(f'Build in debug mode via {cc}!')
@@ -36,3 +42,6 @@ env = Environment(
         CFLAGS=cflags)
 
 env.Program(target, src)
+
+env.Alias('format', env.Command('format', src + headers,
+    'clang-format -i ' + ' '.join(src + headers)))
