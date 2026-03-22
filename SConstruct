@@ -14,9 +14,7 @@ if cc not in available_compilers:
     print(f'ERROR: UNAVAILABLE COMPILER = {cc}!')
     Exit(1)
 
-# Will be, when minimal prototype will be finished.
-# cflags = Split('-Wall -Wextra -Werror')
-cflags = []
+cflags = Split('-Wall -Wextra -Werror')
 cppdefines = []
 src = Split('main.c parse.c')
 headers = Split('parse.h')

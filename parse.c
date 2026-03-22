@@ -68,6 +68,7 @@ int parse(int argc, char *argv[])
     {"compress"   , no_argument      , 0, 'c'},
     {"no-compress", no_argument      , 0, 'C'},
     {"bs"         , required_argument, 0, 'b'},
+    {"help"       , no_argument      , 0, 'h'},
     {0            , 0                , 0,  0 }
   };
   // clang-format on
@@ -77,7 +78,7 @@ int parse(int argc, char *argv[])
   while (1)
   {
     opt =
-        getopt_long(argc, argv, "l:L:s:S:b:vVcC", long_options, &option_index);
+        getopt_long(argc, argv, "l:L:s:S:b:vVcCh", long_options, &option_index);
 
     if (opt == -1)
       break;
@@ -108,6 +109,9 @@ int parse(int argc, char *argv[])
     case 'C':
       gconfig.compress = false;
       break;
+    case 'h':
+      printf(HELP_INFORMATION);
+      return HELP_EXIT;
     case 'b':
       if (parse_size(optarg, &gconfig.bs))
       {
