@@ -10,7 +10,7 @@ int get_disk_size(int fd, size_t *size)
 static int get_disk_size(int fd, size_t *size)
 #endif
 {
-  if (!ioctl(fd, BLKGETSIZE64, size))
+  if (ioctl(fd, BLKGETSIZE64, size))
   {
     fprintf(stderr, "Error!\n");
     return -1;

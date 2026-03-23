@@ -6,6 +6,7 @@
 
 config_t gconfig;
 
+#ifdef DEBUG
 static void print_config()
 {
   printf("=== CURRENT CONFIGURATION ===\n");
@@ -18,6 +19,7 @@ static void print_config()
   printf("Size of chunk     : %zu\n", gconfig.bs);
   printf("=============================\n");
 }
+#endif
 
 static int parse_size(const char *str, size_t *byte_size)
 {
