@@ -1,3 +1,4 @@
+#include "backup.h"
 #include "parse.h"
 
 #define AUTHOR "Leonid Sivachev"

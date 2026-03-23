@@ -16,8 +16,8 @@ if cc not in available_compilers:
 
 cflags = Split('-Wall -Wextra -Werror')
 cppdefines = []
-src = Split('main.c parse.c')
-headers = Split('parse.h')
+src = Split('main.c parse.c backup.c')
+headers = Split('parse.h backup.h')
 target = 'ddup'
 
 if cc == 'clang':
