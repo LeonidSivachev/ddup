@@ -6,7 +6,7 @@
 #include "tests.h"
 
 /*
- * Now it's wrong, Claud write something 
+ * Now it's wrong, Claud write something
  * about 'loop device'.
  * TODO: fix it.
  */

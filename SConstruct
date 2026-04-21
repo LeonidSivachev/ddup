@@ -12,7 +12,7 @@ cppdefines = []
 # TODO: these files should be founded automatically.
 src = Split('main.c parse.c backup.c')
 headers = Split('parse.h backup.h')
-testing_src = Split('tests/run_tests.c tests/test_backup.c')
+testing_src = Split('tests/run_tests.c tests/test_backup.c tests/test_parse.c')
 testing_headers = Split('tests/tests.h')
 target = 'ddup'
 debug_flags = Split('-O0 -g')
@@ -57,5 +57,5 @@ env = Environment(
 env.Program(target, src)
 
 # TODO: create separate executable file for formatting.
-env.Alias('format', env.Command('format', src + headers,
-    'clang-format -i ' + ' '.join(src + headers)))
+# env.Alias('format', env.Command('format', src + headers,
+#    'clang-format -i ' + ' '.join(src + headers)))
