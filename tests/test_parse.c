@@ -1,12 +1,11 @@
 #include <assert.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "../parse.h"
 #include "tests.h"
-#include "../parse.h"
 
-#define START_TEST(n) printf("Starting test number %d!\n", n);
+#define START_TEST(n)  printf("Starting test number %d!\n", n);
 #define FINISH_TEST(n) printf("Test number %d succeeded!\n", n);
 
 static bool check(config_t *config)
@@ -26,23 +25,16 @@ static bool check(config_t *config)
 
 void test_parse()
 {
-  char *test_str[] = {
-    "./ddup",
-    "--loader-disk",
-    "/dev/sda1",
-    "--system-disk",
-    "/dev/sda2"
-  };
+  char *test_str[] = {"./ddup", "--loader-disk", "/dev/sda1", "--system-disk",
+                      "/dev/sda2"};
 
-  config_t config = {
-    .loader_disk = "/dev/sda1",
-    .loader_img  = DEFAULT_LOADER_IMG,
-    .system_disk = "/dev/sda2",
-    .system_img  = DEFAULT_SYSTEM_IMG,
-    .verify      = DEFAULT_VERIFY,
-    .bs          = DEFAULT_BS,
-    .compress    = DEFAULT_COMPRESS
-  };
+  config_t config = {.loader_disk = "/dev/sda1",
+                     .loader_img  = DEFAULT_LOADER_IMG,
+                     .system_disk = "/dev/sda2",
+                     .system_img  = DEFAULT_SYSTEM_IMG,
+                     .verify      = DEFAULT_VERIFY,
+                     .bs          = DEFAULT_BS,
+                     .compress    = DEFAULT_COMPRESS};
 
   START_TEST(1);
   parse(5, test_str);

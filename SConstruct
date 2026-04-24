@@ -40,8 +40,6 @@ if mode == 'debug':
 if mode == 'release':
     cflags += release_flags
 
-# TODO: Maybe we should use separate variable
-# 'TESTING' instead of 'DEBUG'.
 if mode == 'testing':
     cflags += debug_flags
     cppdefines += ['TESTING']
@@ -55,7 +53,3 @@ env = Environment(
         CFLAGS=cflags)
 
 env.Program(target, src)
-
-# TODO: create separate executable file for formatting.
-# env.Alias('format', env.Command('format', src + headers,
-#    'clang-format -i ' + ' '.join(src + headers)))
