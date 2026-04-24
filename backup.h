@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 
-#ifdef DEBUG
+#ifdef TESTING
 int get_disk_size(int, size_t *);
 #endif
 

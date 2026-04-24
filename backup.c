@@ -4,7 +4,7 @@
 
 #include "backup.h"
 
-#ifdef DEBUG
+#ifdef TESTING
 int get_disk_size(int fd, size_t *size)
 #else
 static int get_disk_size(int fd, size_t *size)

@@ -44,7 +44,7 @@ if mode == 'release':
 # 'TESTING' instead of 'DEBUG'.
 if mode == 'testing':
     cflags += debug_flags
-    cppdefines += ['DEBUG']
+    cppdefines += ['TESTING']
     src.remove('main.c')
     src += testing_src
     headers += testing_headers

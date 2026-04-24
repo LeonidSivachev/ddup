@@ -16,10 +16,6 @@ static bool check(config_t *config)
   ret = ret && (!strcmp(gconfig.loader_disk, config->loader_disk));
   ret = ret && (!strcmp(gconfig.loader_img, config->loader_img));
   ret = ret && (!strcmp(gconfig.system_disk, config->system_disk));
-  /*
-   * Here is mistake.
-   * TODO: fix it!
-   */
   ret = ret && (!strcmp(gconfig.system_img, config->system_img));
   ret = ret && (gconfig.verify == config->verify);
   ret = ret && (gconfig.bs == config->bs);
@@ -41,7 +37,7 @@ void test_parse()
   config_t config = {
     .loader_disk = "/dev/sda1",
     .loader_img  = DEFAULT_LOADER_IMG,
-    .system_disk = "dev/sda2",
+    .system_disk = "/dev/sda2",
     .system_img  = DEFAULT_SYSTEM_IMG,
     .verify      = DEFAULT_VERIFY,
     .bs          = DEFAULT_BS,
