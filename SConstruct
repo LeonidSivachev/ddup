@@ -29,7 +29,8 @@ if cc == 'clang':
 if cc == 'gcc':
     cflags.append('-fdiagnostics-color=always')
 
-print(f'Build in {mode} mode via {cc}!')
+if not GetOption('clean'):
+    print(f'Build in {mode} mode via {cc}!')
 
 if mode == 'debug':
     cflags += debug_flags
@@ -57,4 +58,5 @@ for f in src:
     obj = env.Object(f'{f.name[:-2]}.o', f)
     objects.append(obj)
 
+env.Clean('build/ddup', Dir('build'))
 env.Program(target, objects)
