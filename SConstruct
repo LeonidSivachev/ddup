@@ -4,9 +4,7 @@ mode = ARGUMENTS.get('mode', 'debug')
 cc = ARGUMENTS.get('cc', 'clang')
 available_modes = Split('release debug testing')
 available_compilers = Split('gcc clang')
-# TEMPORARY!
 cflags = Split('-Wall -Wextra')
-# cflags = Split('-Wall -Wextra -Werror')
 cppdefines = []
 src = Glob('src/*.c')
 headers = Glob('src/*.h')
@@ -14,7 +12,7 @@ testing_src = Glob('tests/*.c')
 testing_headers = Glob('tests/*.h')
 target = 'ddup'
 debug_flags = Split('-O0 -g')
-release_flags = Split('-O2')
+release_flags = Split('-Werror -O2')
 
 if mode not in available_modes:
     print(f'ERROR: UNAVAILABLE MODE = {mode}!')
