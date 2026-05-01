@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "../backup.h"
+#include "backup.h"
 #include "tests.h"
 
 /*

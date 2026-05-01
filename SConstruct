@@ -2,18 +2,16 @@ SetOption('no_progress', 1)
 
 mode = ARGUMENTS.get('mode', 'debug')
 cc = ARGUMENTS.get('cc', 'clang')
-
 available_modes = Split('release debug testing')
 available_compilers = Split('gcc clang')
 # TEMPORARY!
-cflags = Split('-Wall -Wextra') 
+cflags = Split('-Wall -Wextra')
 # cflags = Split('-Wall -Wextra -Werror')
 cppdefines = []
-# TODO: these files should be founded automatically.
-src = Split('main.c parse.c backup.c')
-headers = Split('parse.h backup.h')
-testing_src = Split('tests/run_tests.c tests/test_backup.c tests/test_parse.c')
-testing_headers = Split('tests/tests.h')
+src = Glob('src/*.c')
+headers = Glob('src/*.h')
+testing_src = Glob('tests/*.c')
+testing_headers = Glob('tests/*.h')
 target = 'ddup'
 debug_flags = Split('-O0 -g')
 release_flags = Split('-O2')
@@ -43,13 +41,20 @@ if mode == 'release':
 if mode == 'testing':
     cflags += debug_flags
     cppdefines += ['TESTING']
-    src.remove('main.c')
+    src = [f for f in Glob('src/*.c') if f.name != 'main.c']
     src += testing_src
     headers += testing_headers
 
 env = Environment(
         CPPDEFINES=cppdefines,
+        CPPPATH=['src/include/', 'tests/include/'],
         CC=cc,
-        CFLAGS=cflags)
+        CFLAGS=cflags,
+        OBJPREFIX='build/')
 
-env.Program(target, src)
+objects = []
+for f in src:
+    obj = env.Object(f'{f.name[:-2]}.o', f)
+    objects.append(obj)
+
+env.Program(target, objects)

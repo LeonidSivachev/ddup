@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../parse.h"
+#include "parse.h"
 #include "tests.h"
 
 #define START_TEST(n)                                                          \
