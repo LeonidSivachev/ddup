@@ -11,6 +11,10 @@
 #include "backup.h"
 #include "parse.h"
 
+#define CURSOR_UP    "\033[1A"
+#define CURSOR_DOWN  "\033[1B"
+#define CLEAR_LINE   "\033[2K"
+
 #ifdef TESTING
 int get_disk_size(int fd, size_t *size)
 #else
@@ -19,6 +23,36 @@ static int get_disk_size(int fd, size_t *size)
 {
   if (ioctl(fd, BLKGETSIZE64, size))
     return -1;
+
+  return 0;
+}
+
+#ifdef TESTING
+int print_progress(size_t written, size_t size)
+#else
+static int print_progress(size_t written, size_t size)
+#endif
+{
+#ifdef DEBUG
+  assert(written <= size);
+#endif
+  struct winsize w;
+  if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1)
+    return -1;
+
+  unsigned short bar_len = w.ws_col - 2;
+  unsigned short progres = (unsigned short)((double)written / size * bar_len);
+
+  char ch;
+  printf("[");
+  for (unsigned short i = 0; i < bar_len; ++i)
+  {
+    ch = (i < progres) ? '#' : '.';
+    printf("%c", ch);
+  }
+  printf("]");
+
+  fflush(stdout);
 
   return 0;
 }

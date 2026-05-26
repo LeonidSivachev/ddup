@@ -10,5 +10,8 @@ int main(int argc, char *argv[])
   /* Backup loader disk. */
   backup_disk(gconfig.loader_disk, gconfig.loader_img);
 
+  /* Backup system disk. */
+  backup_disk(gconfig.system_disk, gconfig.system_img);
+
   return 0;
 }

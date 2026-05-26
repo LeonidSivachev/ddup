@@ -7,9 +7,12 @@
 
 int test_get_size()
 {
+  /*
   printf(
       "Note: Running this test requires 'sudo'.\n
       To test 'get_size()' function type the name
       of disk"
+  )
+  */
 }
 
