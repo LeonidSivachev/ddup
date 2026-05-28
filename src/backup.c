@@ -1,6 +1,8 @@
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/fs.h>
+#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,9 +13,9 @@
 #include "backup.h"
 #include "parse.h"
 
-#define CURSOR_UP    "\033[1A"
-#define CURSOR_DOWN  "\033[1B"
-#define CLEAR_LINE   "\033[2K"
+#define CURSOR_UP   "\033[1A"
+#define CURSOR_DOWN "\033[1B"
+#define CLEAR_LINE  "\033[2K"
 
 #ifdef TESTING
 int get_disk_size(int fd, size_t *size)
@@ -27,6 +29,18 @@ static int get_disk_size(int fd, size_t *size)
   return 0;
 }
 
+static volatile int terminal_resized = 0;
+
+#ifdef TESTING
+void sigwinch_handler(int sig)
+#else
+static void sigwinch_handler(int sig)
+#endif
+{
+  (void)sig;
+  terminal_resized = 1;
+}
+
 #ifdef TESTING
 int print_progress(size_t written, size_t size)
 #else
@@ -36,12 +50,38 @@ static int print_progress(size_t written, size_t size)
 #ifdef DEBUG
   assert(written <= size);
 #endif
-  struct winsize w;
-  if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1)
-    return -1;
 
-  unsigned short bar_len = w.ws_col - 2;
+  static unsigned short bar_len;
+
+  if (terminal_resized || !written)
+  {
+    struct winsize w;
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1)
+      return -1;
+
+    unsigned short new_bar_len = w.ws_col - 2;
+
+    if (bar_len != 0)
+    {
+      unsigned short lines_to_clear = (bar_len + 2) / (new_bar_len + 2);
+      if (bar_len % new_bar_len != 0)
+        ++lines_to_clear;
+
+      for (int i = 0; i < lines_to_clear; ++i)
+        printf(CLEAR_LINE CURSOR_UP);
+      printf(CURSOR_DOWN);
+    }
+
+    bar_len          = new_bar_len;
+    terminal_resized = 0;
+  }
+
   unsigned short progres = (unsigned short)((double)written / size * bar_len);
+
+  if (written != 0)
+  {
+    printf("\r");
+  }
 
   char ch;
   printf("[");
@@ -99,6 +139,8 @@ void backup_disk(const char *src, const char *dst)
     goto cleanup;
   }
 
+  signal(SIGWINCH, sigwinch_handler);
+  print_progress(0, src_size);
   while (written < src_size)
   {
     size_t to_read    = gconfig.bs;
@@ -130,13 +172,14 @@ void backup_disk(const char *src, const char *dst)
     }
 
     written += read_res;
+    print_progress(written, src_size);
 #ifdef DEBUG
     /*
      * TODO: implement function for comfortable recognition
      * count copied bytes (e.g. MB or KB)
      * Maybe we should add something like progress bar.
      */
-    printf("Copied %zd byte!\n", read_res);
+    // printf("Copied %zd byte!\n", read_res);
 #endif
   }
 #ifdef DEBUG

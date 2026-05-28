@@ -15,4 +15,3 @@ int test_get_size()
   )
   */
 }
-
