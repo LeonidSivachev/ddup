@@ -29,7 +29,7 @@ static int get_disk_size(int fd, size_t *size)
   return 0;
 }
 
-static volatile int terminal_resized = 0;
+static volatile sig_atomic_t terminal_resized = 0;
 
 #ifdef TESTING
 void sigwinch_handler(int sig)
