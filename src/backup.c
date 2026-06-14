@@ -19,8 +19,6 @@
 #define CURSOR_DOWN "\033[1B"
 #define CLEAR_LINE  "\033[2K"
 
-#define HASH_FUNC "MD5"
-
 #ifdef TESTING
 int get_disk_size(int fd, size_t *size)
 #else
@@ -200,7 +198,8 @@ cleanup:
   free(buf);
 }
 
-void backup_disk_verified(const char *src, const char *dst)
+void backup_disk_verified(const char *src, const char *dst, char *digestname,
+                          unsigned char *md_value, unsigned int *md_len)
 {
   assert(gconfig.verify);
 
@@ -211,8 +210,6 @@ void backup_disk_verified(const char *src, const char *dst)
   size_t written  = 0;
   EVP_MD_CTX *ctx = EVP_MD_CTX_new();
   const EVP_MD *md;
-  unsigned char md_value[EVP_MAX_MD_SIZE];
-  unsigned int md_len;
 
   if (unlikely(ctx == NULL))
   {
@@ -220,10 +217,10 @@ void backup_disk_verified(const char *src, const char *dst)
     return;
   }
 
-  md = EVP_get_digestbyname(HASH_FUNC);
+  md = EVP_get_digestbyname(digestname);
   if (unlikely(md == NULL))
   {
-    fprintf(stderr, "Error: unable to find %s.\n", HASH_FUNC);
+    fprintf(stderr, "Error: unable to find %s.\n", digestname);
     goto cleanup;
   }
 
@@ -282,7 +279,7 @@ void backup_disk_verified(const char *src, const char *dst)
 
     if (unlikely(!EVP_DigestUpdate(ctx, buf, to_read)))
     {
-      fprintf("Error: digest update failed.\n");
+      fprintf(stderr, "Error: digest update failed.\n");
       goto cleanup;
     }
 
@@ -307,38 +304,19 @@ void backup_disk_verified(const char *src, const char *dst)
 
     written += read_res;
     print_progress(written, src_size);
-#ifdef DEBUG
-    /*
-     * TODO: implement function for comfortable recognition
-     * count copied bytes (e.g. MB or KB)
-     * Maybe we should add something like progress bar.
-     */
-    // printf("Copied %zd byte!\n", read_res);
-#endif
+
+    if (!EVP_DigestFinal_ex(ctx, md_value, md_len))
+    {
+      fprintf(stderr, "Error: message digest finalization failed.\n");
+    }
+
+  cleanup:
+    if (src_fd != -1)
+      close(src_fd);
+    if (dst_fd != -1)
+      close(dst_fd);
+    if (ctx != NULL)
+      EVP_MD_CTX_free(ctx);
+    if (buf != NULL)
+      free(buf);
   }
-#ifdef DEBUG
-  printf("Successcully created disk image!\n");
-#endif
-
-  if (!EVP_DigestFinal_ex(ctx, md_value, &md_len))
-  {
-    printf("Error: message digest finalization failed.\n");
-    goto cleanup; /* temporary! */
-  }
-
-  /* temporary! */
-  printf("Digest is: ");
-  for (i = 0; i < md_len; i++)
-    printf("%02x", md_value[i]);
-  printf("\n");
-
-cleanup:
-  if (src_fd != -1)
-    close(src_fd);
-  if (dst_fd != -1)
-    close(dst_fd);
-  if (ctx != NULL)
-    EVP_MD_CTX_free(ctx);
-  if (buf != NULL)
-    free(buf);
-}

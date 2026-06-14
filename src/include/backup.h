@@ -3,7 +3,8 @@
 #include <stddef.h>
 
 void backup_disk(const char *src, const char *dst);
-void backup_disk_verified(const char *src, const char *dst);
+void backup_disk_verified(const char *src, const char *dst, char *digestname,
+                          unsigned char *md_value, unsigned int *md_len);
 
 #ifdef TESTING
 int get_disk_size(int, size_t *);
