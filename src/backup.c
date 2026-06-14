@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/fs.h>
+#include <openssl/evp.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -11,11 +12,14 @@
 #include <unistd.h>
 
 #include "backup.h"
+#include "compiler.h"
 #include "parse.h"
 
 #define CURSOR_UP   "\033[1A"
 #define CURSOR_DOWN "\033[1B"
 #define CLEAR_LINE  "\033[2K"
+
+#define HASH_FUNC "MD5"
 
 #ifdef TESTING
 int get_disk_size(int fd, size_t *size)
@@ -194,4 +198,147 @@ cleanup:
   /* How I remember free(NULL) is valid operation,
    * but it should be checked. */
   free(buf);
+}
+
+void backup_disk_verified(const char *src, const char *dst)
+{
+  assert(gconfig.verify);
+
+  int src_fd      = -1;
+  int dst_fd      = -1;
+  uint8_t *buf    = NULL;
+  size_t src_size = 0;
+  size_t written  = 0;
+  EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+  const EVP_MD *md;
+  unsigned char md_value[EVP_MAX_MD_SIZE];
+  unsigned int md_len;
+
+  if (unlikely(ctx == NULL))
+  {
+    fprintf(stderr, "Error: message digest create failed.\n");
+    return;
+  }
+
+  md = EVP_get_digestbyname(HASH_FUNC);
+  if (unlikely(md == NULL))
+  {
+    fprintf(stderr, "Error: unable to find %s.\n", HASH_FUNC);
+    goto cleanup;
+  }
+
+  if (unlikely(!EVP_DigestInit_ex(ctx, md, NULL)))
+  {
+    fprintf(stderr, "Error: failed to initialize digest context\n");
+    goto cleanup;
+  }
+
+  src_fd = open(src, O_RDONLY);
+  if (src_fd == -1)
+  {
+    fprintf(stderr, "Error: failed to open source '%s': %s\n", src,
+            strerror(errno));
+    goto cleanup;
+  }
+
+  /* TODO: think about mode(0644) */
+  dst_fd = open(dst, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+  if (src_fd == -1)
+  {
+    fprintf(stderr, "Error: failed to open destination '%s': %s\n", dst,
+            strerror(errno));
+    goto cleanup;
+  }
+
+  if (get_disk_size(src_fd, &src_size) == -1)
+  {
+    fprintf(stderr, "Error: failed to determine disk size '%s'\n", src);
+    goto cleanup;
+  }
+
+#ifdef DEBUG
+  printf("Disk size is %zu!\n", src_size);
+#endif
+
+  buf = malloc(gconfig.bs);
+  if (buf == NULL)
+  {
+    fprintf(stderr, "Error: failed to allocate buffer\n");
+    goto cleanup;
+  }
+
+  signal(SIGWINCH, sigwinch_handler);
+  print_progress(0, src_size);
+  while (written < src_size)
+  {
+    size_t to_read    = gconfig.bs;
+    ssize_t read_res  = 0;
+    ssize_t write_res = 0;
+
+    if (unlikely(written + to_read > src_size))
+      to_read = src_size - written;
+
+    read_res = read(src_fd, buf, to_read);
+
+    if (unlikely(!EVP_DigestUpdate(ctx, buf, to_read)))
+    {
+      fprintf("Error: digest update failed.\n");
+      goto cleanup;
+    }
+
+    if (unlikely(read_res == -1))
+    {
+      fprintf(stderr, "Error: read failed from '%s': %s\n", src,
+              strerror(errno));
+      goto cleanup;
+    }
+
+    if (read_res == 0)
+      break;
+
+    write_res = write(dst_fd, buf, to_read);
+
+    if (write_res != read_res)
+    {
+      fprintf(stderr, "Error: failed write to '%s': %s\n", dst,
+              strerror(errno));
+      goto cleanup;
+    }
+
+    written += read_res;
+    print_progress(written, src_size);
+#ifdef DEBUG
+    /*
+     * TODO: implement function for comfortable recognition
+     * count copied bytes (e.g. MB or KB)
+     * Maybe we should add something like progress bar.
+     */
+    // printf("Copied %zd byte!\n", read_res);
+#endif
+  }
+#ifdef DEBUG
+  printf("Successcully created disk image!\n");
+#endif
+
+  if (!EVP_DigestFinal_ex(ctx, md_value, &md_len))
+  {
+    printf("Error: message digest finalization failed.\n");
+    goto cleanup; /* temporary! */
+  }
+
+  /* temporary! */
+  printf("Digest is: ");
+  for (i = 0; i < md_len; i++)
+    printf("%02x", md_value[i]);
+  printf("\n");
+
+cleanup:
+  if (src_fd != -1)
+    close(src_fd);
+  if (dst_fd != -1)
+    close(dst_fd);
+  if (ctx != NULL)
+    EVP_MD_CTX_free(ctx);
+  if (buf != NULL)
+    free(buf);
 }

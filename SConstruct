@@ -49,7 +49,8 @@ env = Environment(
         CPPPATH=['src/include/', 'tests/include/'],
         CC=cc,
         CFLAGS=cflags,
-        OBJPREFIX='build/')
+        OBJPREFIX='build/',
+        LIBS=['crypto'])
 
 objects = []
 for f in src:
