@@ -97,8 +97,9 @@ static int print_progress(size_t written, size_t size)
   return 0;
 }
 
-void backup_disk(const char *src, const char *dst)
+int backup_disk(const char *src, const char *dst)
 {
+  int ret         = 0;
   int src_fd      = -1;
   int dst_fd      = -1;
   uint8_t *buf    = NULL;
@@ -110,6 +111,7 @@ void backup_disk(const char *src, const char *dst)
   {
     fprintf(stderr, "Error: failed to open source '%s': %s\n", src,
             strerror(errno));
+    ret = -1;
     goto cleanup;
   }
 
@@ -119,23 +121,22 @@ void backup_disk(const char *src, const char *dst)
   {
     fprintf(stderr, "Error: failed to open destination '%s': %s\n", dst,
             strerror(errno));
+    ret = -1;
     goto cleanup;
   }
 
   if (get_disk_size(src_fd, &src_size) == -1)
   {
     fprintf(stderr, "Error: failed to determine disk size '%s'\n", src);
+    ret = -1;
     goto cleanup;
   }
-
-#ifdef DEBUG
-  printf("Disk size is %zu!\n", src_size);
-#endif
 
   buf = malloc(gconfig.bs);
   if (buf == NULL)
   {
     fprintf(stderr, "Error: failed to allocate buffer\n");
+    ret = -1;
     goto cleanup;
   }
 
@@ -156,6 +157,7 @@ void backup_disk(const char *src, const char *dst)
     {
       fprintf(stderr, "Error: read failed from '%s': %s\n", src,
               strerror(errno));
+      ret = -1;
       goto cleanup;
     }
 
@@ -168,30 +170,20 @@ void backup_disk(const char *src, const char *dst)
     {
       fprintf(stderr, "Error: failed write to '%s': %s\n", dst,
               strerror(errno));
+      ret = -1;
       goto cleanup;
     }
 
     written += read_res;
     print_progress(written, src_size);
-#ifdef DEBUG
-    /*
-     * TODO: implement function for comfortable recognition
-     * count copied bytes (e.g. MB or KB)
-     * Maybe we should add something like progress bar.
-     */
-    // printf("Copied %zd byte!\n", read_res);
-#endif
   }
-#ifdef DEBUG
-  printf("Successcully created disk image!\n");
-#endif
 
 cleanup:
   if (src_fd != -1)
     close(src_fd);
   if (dst_fd != -1)
     close(dst_fd);
-  /* How I remember free(NULL) is valid operation,
-   * but it should be checked. */
-  free(buf);
+  if (buf != NULL)
+    free(buf);
+  return ret;
 }

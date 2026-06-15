@@ -2,7 +2,7 @@
 #define BACKUP_H
 #include <stddef.h>
 
-void backup_disk(const char *src, const char *dst);
+int backup_disk(const char *src, const char *dst);
 
 #ifdef TESTING
 int get_disk_size(int, size_t *);
