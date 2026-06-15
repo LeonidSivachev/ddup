@@ -113,12 +113,12 @@ int parse(int argc, char *argv[])
       break;
     case 'h':
       printf(HELP_INFORMATION);
-      return HELP_EXIT;
+      return PARSE_HELP;
     case 'b':
       if (parse_size(optarg, &gconfig.bs))
       {
         fprintf(stderr, "Error: invalid block size '%s'\n", optarg);
-        return -1;
+        return PARSE_ERROR;
       }
       break;
     case '?':
@@ -136,21 +136,21 @@ int parse(int argc, char *argv[])
   if (optind < argc)
   {
     fprintf(stderr, "Error: unexpected argument '%s'\n", argv[optind]);
-    return -1;
+    return PARSE_ERROR;
   }
 
   if (gconfig.loader_disk == INCORRECT_LOADER_DISK)
   {
     fprintf(stderr, "Error: please specify a disk with loader!\n");
     fprintf(stderr, "Example: ddup --loader-disk /dev/sda1.\n");
-    return -1;
+    return PARSE_ERROR;
   }
 
   if (gconfig.system_disk == INCORRECT_SYSTEM_DISK)
   {
     fprintf(stderr, "Error: please specify a disk with system!\n");
     fprintf(stderr, "Example: ddup --system-disk /dev/sda2.\n");
-    return -1;
+    return PARSE_ERROR;
   }
 
   return 0;
