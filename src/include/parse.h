@@ -14,8 +14,8 @@
 #define INCORRECT_LOADER_DISK NULL
 #define INCORRECT_SYSTEM_DISK NULL
 
-#define PARSE_HELP    1
-#define PARSE_ERROR   -1
+#define PARSE_HELP  1
+#define PARSE_ERROR -1
 
 #define HELP_INFORMATION                                                       \
   "Usage: ddup [OPTIONS]\n"                                                    \

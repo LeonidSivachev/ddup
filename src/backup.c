@@ -16,6 +16,7 @@
 #define CURSOR_UP   "\033[1A"
 #define CURSOR_DOWN "\033[1B"
 #define CLEAR_LINE  "\033[2K"
+#define DELETE_LINE "\033[M]"
 
 #ifdef TESTING
 int get_disk_size(int fd, size_t *size)
@@ -52,9 +53,11 @@ static int print_progress(size_t written, size_t size)
 #endif
 
   static unsigned short bar_len;
+  unsigned short lines_to_clear = 0;
 
   if (terminal_resized || !written)
   {
+    /* Terminal size changed or it's the first launch. */
     struct winsize w;
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1)
       return -1;
@@ -63,34 +66,46 @@ static int print_progress(size_t written, size_t size)
 
     if (bar_len != 0)
     {
-      unsigned short lines_to_clear = (bar_len + 2) / (new_bar_len + 2);
+      lines_to_clear += (bar_len + 2) / (new_bar_len + 2);
       if (bar_len % new_bar_len != 0)
         ++lines_to_clear;
-
-      for (int i = 0; i < lines_to_clear; ++i)
-        printf(CLEAR_LINE CURSOR_UP);
-      printf(CURSOR_DOWN);
     }
 
     bar_len          = new_bar_len;
     terminal_resized = 0;
   }
+  else
+  {
+    /* Terminal size didn't change. */
+    lines_to_clear = 1;
+  }
 
-  unsigned short progres = (unsigned short)((double)written / size * bar_len);
+  unsigned short progress = (unsigned short)((double)written / size * bar_len);
 
   if (written != 0)
   {
+    /* Clean old progress bar. */
+    for (int i = 0; i < lines_to_clear; ++i)
+    {
+      printf(CURSOR_UP DELETE_LINE);
+    }
     printf("\r");
+  }
+
+  if (progress == bar_len)
+  {
+    /* Copying is finished. */
+    return 0;
   }
 
   char ch;
   printf("[");
   for (unsigned short i = 0; i < bar_len; ++i)
   {
-    ch = (i < progres) ? '#' : '.';
+    ch = (i < progress) ? '#' : '.';
     printf("%c", ch);
   }
-  printf("]");
+  printf("]\n");
 
   fflush(stdout);
 
