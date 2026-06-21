@@ -18,6 +18,11 @@
 #define CLEAR_LINE  "\033[2K"
 #define DELETE_LINE "\033[M]"
 
+#define MAX_BAR_LEN 512
+
+/* Maybe it should be in separate file. */
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
 #ifdef TESTING
 int get_disk_size(int fd, size_t *size)
 #else
@@ -71,7 +76,7 @@ static int print_progress(size_t written, size_t size)
         ++lines_to_clear;
     }
 
-    bar_len          = new_bar_len;
+    bar_len          = MIN(new_bar_len, MAX_BAR_LEN);
     terminal_resized = 0;
   }
   else
@@ -98,15 +103,15 @@ static int print_progress(size_t written, size_t size)
     return 0;
   }
 
-  char ch;
-  printf("[");
-  for (unsigned short i = 0; i < bar_len; ++i)
-  {
-    ch = (i < progress) ? '#' : '.';
-    printf("%c", ch);
-  }
-  printf("]\n");
+  char prog_bar[MAX_BAR_LEN + 3];
 
+  prog_bar[0] = '[';
+  memset(prog_bar + 1, '#', progress);
+  memset(prog_bar + progress + 1, '.', bar_len - progress);
+  prog_bar[bar_len + 1] = ']';
+  prog_bar[bar_len + 2] = '\0';
+
+  printf("%s\n", prog_bar);
   fflush(stdout);
 
   return 0;
