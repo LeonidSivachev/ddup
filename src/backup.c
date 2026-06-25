@@ -20,8 +20,57 @@
 
 #define MAX_BAR_LEN 512
 
+#define KB (double)(1 << 10)
+#define MB (double)(1 << 20)
+#define GB (double)(1 << 30)
+
 /* Maybe it should be in separate file. */
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
+
+static volatile sig_atomic_t terminal_resized = 0;
+
+typedef enum
+{
+  UNIT_BYTES,
+  UNIT_KB,
+  UNIT_MB,
+  UNIT_GB
+} unit_t;
+
+/* size -- size of disk in bytes. */
+static unit_t choose_units(size_t size)
+{
+  if (size <= (1 << 10))
+    return UNIT_BYTES;
+  if (size <= (1 << 20))
+    return UNIT_KB;
+  if (size <= (1 << 30))
+    return UNIT_MB;
+  return UNIT_GB;
+}
+
+static double bytes2units(size_t size, unit_t unit, double *units_size)
+{
+  if (units_size == NULL)
+    return -1;
+
+  switch (unit) 
+  {
+    case UNIT_BYTES:
+      *units_size = (double)size;
+      return 0;
+    case UNIT_KB: 
+      *units_size = (double)size / KB;
+      return 0;
+    case UNIT_MB:
+      *units_size = (double)size / MB;
+      return 0;
+    case UNIT_GB:
+      *units_size = (double)size / GB;
+      return 0;
+  }
+  return -1;
+}
 
 #ifdef TESTING
 int get_disk_size(int fd, size_t *size)
@@ -34,8 +83,6 @@ static int get_disk_size(int fd, size_t *size)
 
   return 0;
 }
-
-static volatile sig_atomic_t terminal_resized = 0;
 
 #ifdef TESTING
 void sigwinch_handler(int sig)
